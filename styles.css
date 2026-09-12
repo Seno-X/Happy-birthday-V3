@@ -1,4 +1,6 @@
-html { scroll-behavior: smooth; }
+html {
+    scroll-behavior: smooth;
+}
 
 * {
     -webkit-tap-highlight-color: transparent;
@@ -18,15 +20,29 @@ html { scroll-behavior: smooth; }
 }
 
 body {
-    background: var(--bg-dark);
+    background-color: var(--bg-dark);
+    min-height: 100vh;
     min-height: 100svh;
+    min-height: 100dvh;
     overflow-x: hidden;
-    transition: background var(--transition-time) ease;
     font-family: 'Sarabun', sans-serif;
 }
 
-body.day-mode {
-    background: linear-gradient(160deg, #2d1b69 0%, #c9547a 45%, #ffb347 100%);
+/* ── เลเยอร์ท้องฟ้าตอนกลางวัน ── */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-color: #ffb347;
+    background-image: linear-gradient(180deg, #2d1b69 0%, #c9547a 42%, #ffb347 78%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-time) ease;
+}
+
+body.day-mode::before {
+    opacity: 1;
 }
 
 /* ── Canvas พื้นหลัง ── */
@@ -36,19 +52,29 @@ body.day-mode {
     z-index: 0;
     pointer-events: none;
 }
+
 #particles {
     z-index: 1;
     opacity: 0;
     transition: opacity var(--transition-time) ease;
 }
-body.day-mode #particles { opacity: 1; }
-body.day-mode #stars { opacity: 0; transition: opacity var(--transition-time) ease; }
+
+body.day-mode #particles {
+    opacity: 1;
+}
+
+body.day-mode #stars {
+    opacity: 0;
+    transition: opacity var(--transition-time) ease;
+}
 
 /* ── Main ── */
 main {
     position: relative;
     z-index: 2;
+    min-height: 100vh;
     min-height: 100svh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -61,6 +87,14 @@ main {
     flex-direction: column;
     align-items: center;
     gap: .8rem;
+    padding: 2.4rem 2.6rem;
+    border-radius: 24px;
+    background: linear-gradient(165deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    border: 1px solid rgba(255,255,255,.09);
+    box-shadow:
+        0 25px 60px rgba(0,0,0,.4),
+        inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter: blur(6px);
     transition: opacity 1s ease, transform 1s ease;
 }
 
@@ -73,149 +107,667 @@ main {
 .switches-row {
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 24px;
     align-items: center;
 }
 
 .mini-switch {
-    width: 52px;
-    height: 28px;
-    border-radius: 14px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.2);
+    width: 56px;
+    height: 30px;
+    border-radius: 15px;
+    background: linear-gradient(160deg, rgba(255,255,255,.1), rgba(255,255,255,.03));
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.35);
     cursor: pointer;
     position: relative;
-    transition: background .4s, box-shadow .4s;
+    transition:
+        background .4s ease,
+        box-shadow .4s ease,
+        border-color .4s ease;
 }
-.mini-switch:hover {
-    box-shadow: 0 0 14px rgba(255,179,71,.3);
+
+@media (hover: hover) and (pointer: fine) {
+    .mini-switch:hover {
+        border-color: rgba(255,179,71,.5);
+        box-shadow:
+            inset 0 2px 5px rgba(0,0,0,.35),
+            0 0 16px rgba(255,179,71,.25);
+    }
 }
+
 .mini-switch.on {
-    background: rgba(255,179,71,.35);
-    box-shadow: 0 0 20px rgba(255,179,71,.4);
+    background: linear-gradient(160deg, rgba(255,179,71,.5), rgba(255,140,90,.3));
+    border-color: rgba(255,179,71,.6);
+    box-shadow:
+        inset 0 2px 5px rgba(0,0,0,.2),
+        0 0 30px 3px rgba(255,179,71,.65);
 }
 
 .mini-knob {
     position: absolute;
-    top: 3px; left: 3px;
-    width: 20px; height: 20px;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,.3);
-    transition: transform .35s cubic-bezier(.34,1.56,.64,1), background .35s;
-}
-.mini-switch.on .mini-knob {
-    transform: translateX(24px);
-    background: #ffb347;
+    background: linear-gradient(160deg, #ffffff, #e4e4e4);
+    box-shadow:
+        0 2px 6px rgba(0,0,0,.4),
+        inset 0 -2px 3px rgba(0,0,0,.08);
+    transition:
+        transform .35s cubic-bezier(.34,1.56,.64,1),
+        background .35s ease;
 }
 
-/* ── Birthday message ── */
-#message {
+.mini-switch.on .mini-knob {
+    transform: translateX(26px);
+    background: linear-gradient(160deg, #ffd291, #ffb347);
+}
+
+/* ═══════════════════════════════════════
+   ── ซองจดหมาย Scene ──
+   ═══════════════════════════════════════ */
+
+#envelope-scene {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 100%;
     max-width: 560px;
     padding: 0 2rem;
-    text-align: center;
+    display: flex;
+    justify-content: center;
     opacity: 0;
     transform: translate(-50%, calc(-50% + 18px));
     transition: opacity 1.6s ease, transform 1.6s ease;
     pointer-events: none;
-    font-family: 'Itim', sans-serif;
 }
 
-#message.show {
+/* ── เงาใต้ซอง ── */
+#envelope-scene::before {
+    content: '';
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 200px;
+    height: 28px;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(0,0,0,.48) 0%,
+            rgba(0,0,0,.22) 42%,
+            transparent 72%
+        );
+
+    filter: blur(4px);
+    z-index: -1;
+
+    opacity: 1;
+
+    transition:
+        opacity .6s ease,
+        transform .6s ease;
+}
+
+#envelope-scene.flying::before {
+    opacity: 0;
+    transform: translateX(-50%) scale(.65);
+}
+
+#envelope-scene.show {
     opacity: 1;
     transform: translate(-50%, -50%);
     pointer-events: auto;
 }
 
-#message-eyebrow {
-    font-size: .8rem;
-    letter-spacing: .22em;
+/* ═════════════════════════════════════
+   ── ซองจดหมาย — Sharp Clean Premium ──
+   ═════════════════════════════════════ */
+#envelope {
+    position: relative;
+    width: 250px;
+    height: 165px;
+    cursor: pointer;
+    /* ขอบคม ไม่มีมุมมน */
+    border-radius: 0;
+    background: linear-gradient(
+        135deg,
+        #f6e5c5 0%,
+        #ead0a6 52%,
+        #d8b27d 100%
+    );
+    box-shadow:
+        0 25px 50px -12px rgba(0,0,0,.52),
+        inset 0 1px 0 rgba(255,255,255,.65),
+        inset 0 -8px 16px rgba(90,50,15,.30);
+    transform: rotate(-2deg);
+    transition:
+        transform .6s cubic-bezier(.25,1,.4,1) .5s,
+        opacity .6s ease .5s,
+        box-shadow .35s ease;
+    perspective: 800px;
+    animation: envelope-invite 2.8s ease-in-out infinite;
+}
+
+/* ═════════════════════════════════════
+   ── ผิวซอง — ไม่มีเส้นพับไขว้ด้านล่าง ──
+   ═════════════════════════════════════ */
+#envelope::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            110deg,
+            transparent 32%,
+            rgba(255,255,255,.4) 46%,
+            transparent 60%
+        ),
+        radial-gradient(
+            ellipse 170px 55px at 50% 45%,
+            rgba(255,255,255,.16),
+            transparent 72%
+        );
+    background-size: 260% 100%, 100% 100%;
+    background-position: 150% 0, 0 0;
+    background-repeat: no-repeat;
+    animation: envelope-sheen 5.5s ease-in-out infinite;
+
+    border: 1.5px solid rgba(90,55,20,.42);
+
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes envelope-sheen {
+    0%, 55%, 100% { background-position: 150% 0, 0 0; }
+    28% { background-position: -60% 0, 0 0; }
+}
+
+#envelope:hover::before {
+    animation-play-state: paused;
+}
+
+/* เส้นขอบคมบาง ๆ */
+#envelope::after {
+    content: 'Special Delivery';
+    position: absolute;
+    right: 14px;
+    bottom: 11px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: .62rem;
+    font-weight: 600;
+    color: rgba(120,80,35,.58);
+    letter-spacing: .08em;
     text-transform: uppercase;
-    color: rgba(255,255,255,.75);
-    margin-bottom: 1rem;
+    border-top: 1px solid rgba(120,80,35,.25);
+    padding-top: 3px;
+}
+
+/* ═════════════════════════════════════
+   ── Hover ──
+   ═════════════════════════════════════ */
+#envelope:hover {
+    transform: translateY(-7px) scale(1.025) rotate(-1deg);
+    box-shadow:
+        0 32px 62px -12px rgba(0,0,0,.56),
+        inset 0 1px 0 rgba(255,255,255,.72),
+        inset 0 -8px 16px rgba(90,50,15,.30);
+    animation-play-state: paused;
+}
+
+/* ═════════════════════════════════════
+   ── ตอนเปิด ──
+   ═════════════════════════════════════ */
+#envelope.opening {
+    transform: translateY(150px) scale(.94) rotate(3deg);
+    opacity: 0;
+    pointer-events: none;
+    animation: none;
+}
+
+/* ═════════════════════════════════════
+   ── Glow เบา ๆ ──
+   ═════════════════════════════════════ */
+@keyframes envelope-invite {
+    0%, 100% {
+        box-shadow:
+            0 25px 50px -12px rgba(0,0,0,.52),
+            inset 0 1px 0 rgba(255,255,255,.65),
+            inset 0 -8px 16px rgba(90,50,15,.30),
+            0 0 0 rgba(255,179,71,0);
+    }
+    50% {
+        box-shadow:
+            0 25px 50px -12px rgba(0,0,0,.52),
+            inset 0 1px 0 rgba(255,255,255,.65),
+            inset 0 -8px 16px rgba(90,50,15,.30),
+            0 0 34px 3px rgba(255,179,71,.48);
+    }
+}
+
+/* ═════════════════════════════════════
+   ── ฝากระดาษ ──
+   ═════════════════════════════════════ */
+.envelope-flap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 94px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.65) 0%,
+            transparent 18%
+        ),
+        linear-gradient(
+            165deg,
+            #f7e7c9 0%,
+            #e9cfa5 58%,
+            #d7b17c 100%
+        );
+    /* สามเหลี่ยมคม */
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        50% 88%
+    );
+    transform-origin: top center;
+    transition: transform .6s cubic-bezier(.5,0,.3,1.2);
+    z-index: 3;
+    filter:
+        drop-shadow(0 1px 0 rgba(120,80,35,.6))
+        drop-shadow(0 -1px 0 rgba(120,80,35,.6))
+        drop-shadow(1px 0 0 rgba(120,80,35,.6))
+        drop-shadow(-1px 0 0 rgba(120,80,35,.6))
+        drop-shadow(0 5px 6px rgba(100,60,20,.25));
+}
+/* ไม่สร้างเส้นพับกลาง flap แล้ว */
+/* ทำให้พื้นผิวสะอาดและดูเหมือนกระดาษจริง */
+
+#envelope.opening .envelope-flap {
+    transform: rotateX(175deg);
+}
+
+/* ═════════════════════════════════════
+   ── Wax Seal ──
+   ═════════════════════════════════════ */
+.envelope-seal {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    width: 46px;
+    height: 46px;
+    border-radius: 48% 51% 49% 52% / 51% 49% 52% 48%;
+    background:
+        radial-gradient(
+            circle at 32% 28%,
+            rgba(255,255,255,.42),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 68% 72%,
+            rgba(0,0,0,.42),
+            transparent 55%
+        ),
+        radial-gradient(
+            circle at 42% 38%,
+            #df344e 0%,
+            #b91e36 48%,
+            #851020 100%
+        );
+    transform: translateX(-50%);
+    box-shadow:
+        0 6px 12px rgba(0,0,0,.40),
+        inset 0 2px 4px rgba(255,255,255,.28),
+        inset 0 -3px 6px rgba(0,0,0,.45);
+    z-index: 4;
+    transition: opacity .3s ease, transform .3s ease;
+}
+
+/* ขอบของตราประทับ */
+.envelope-seal::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: inherit;
+    border: 1px solid rgba(255,255,255,.15);
+    box-shadow: inset 0 0 5px rgba(0,0,0,.3);
+}
+
+/* สัญลักษณ์ */
+.envelope-seal::after {
+    content: 'X';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -46%);
+    color: #650817;
+    font-family: serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-shadow:
+        1px 1px 1px rgba(255,255,255,.25),
+        -1px -1px 2px rgba(0,0,0,.55);
+}
+
+/* เปิดแล้วตราประทับหาย */
+#envelope.opening .envelope-seal {
+    opacity: 0;
+    transform: translateX(-50%) scale(.6);
+}
+
+/* ═════════════════════════════════════
+   ── กระดาษด้านใน ──
+   ═════════════════════════════════════ */
+.letter-paper {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 190px;
+    height: 104px;
+    background:
+        repeating-linear-gradient(
+            rgba(139,111,71,.12) 0 1px,
+            transparent 1px 18px
+        ),
+        linear-gradient(
+            165deg,
+            #fdf6e6,
+            #f6e6c2
+        );
+    border-radius: 0;
+    box-shadow: 0 8px 18px rgba(0,0,0,.30);
+    transform: translate(-50%, 0) scale(.9);
+    opacity: 0;
+    transition:
+        transform .65s cubic-bezier(.25,1,.4,1) .25s,
+        opacity .5s ease .25s;
+    z-index: 2;
+}
+
+/* กระดาษดึงออกมา */
+#envelope.opening .letter-paper {
+    transform: translate(-50%, -82px) scale(1);
+    opacity: 1;
+    z-index: 4;
+}
+
+/* ═══════════════════════════════════════
+   ── Birthday message ──
+═══════════════════════════════════════ */
+
+.paper {
+    position: relative;
+
+    background:
+        repeating-linear-gradient(
+            rgba(139,111,71,.06) 0 1px,
+            transparent 1px 34px
+        ),
+
+        linear-gradient(
+            165deg,
+            #fdf6e6,
+            #f6e6c2
+        );
+
+    border-radius: 16px;
+
+    padding: 2.8rem 2.2rem;
+
+    box-shadow:
+        0 25px 60px rgba(0,0,0,.4),
+        inset 0 0 0 1px rgba(255,255,255,.4);
+
+    transform: rotate(-0.6deg);
+}
+
+.paper::before {
+    content: '✦';
+
+    position: absolute;
+
+    top: 1.1rem;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    font-size: 1rem;
+
+    color: #c9822f;
+
+    opacity: .7;
+}
+
+#message {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: 100%;
+    max-width: 560px;
+
+    padding: 0 2rem;
+
+    text-align: center;
+
+    opacity: 0;
+
+    transform:
+        translate(
+            -50%,
+            calc(-50% + 18px)
+        )
+        scale(.96);
+
+    transition:
+        opacity 1.6s ease,
+        transform 1.6s cubic-bezier(.25,1,.4,1);
+
+    pointer-events: none;
+
+    font-family: 'Itim', sans-serif;
+}
+
+#message.show {
+    opacity: 1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1);
+
+    pointer-events: auto;
+}
+
+#message-eyebrow {
+    font-size: .78rem;
+
+    letter-spacing: .26em;
+
+    text-transform: uppercase;
+
+    color: #a3814f;
+
+    margin-top: .6rem;
+    margin-bottom: 1.1rem;
 }
 
 #message-title {
     font-weight: 600;
-    font-size: clamp(1.8rem, 6vw, 2.6rem);
+
+    font-size:
+        clamp(1.8rem, 6vw, 2.6rem);
+
     line-height: 1.35;
-    color: #fff;
-    text-shadow: 0 2px 20px rgba(0,0,0,.25);
+
+    color: #3f2e1e;
+
     margin-bottom: 1.5rem;
 }
 
 #recipient-name {
-    color: #fff2d1;
+    color: #c9547a;
 }
 
 #message-body {
     font-weight: 300;
-    font-size: clamp(1rem, 3vw, 1.15rem);
+
+    font-size:
+        clamp(1rem, 3vw, 1.15rem);
+
     line-height: 1.9;
-    color: rgba(255,255,255,.92);
-    text-shadow: 0 1px 12px rgba(0,0,0,.2);
+
+    color: #5a4632;
 }
 
 #message-signoff {
-    margin-top: 2.2rem;
+    position: relative;
+
+    margin-top: 2.4rem;
+
+    padding-top: 1.2rem;
+
     font-size: .9rem;
+
     letter-spacing: .08em;
-    color: rgba(255,255,255,.7);
+
+    color: #8b6f47;
+
     font-style: italic;
 }
 
-/* ── ปุ่มต่อไป ── */
+#message-signoff::before {
+    content: '';
+
+    position: absolute;
+
+    top: 0;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 46px;
+    height: 1px;
+
+    background:
+        rgba(139,111,71,.35);
+}
+
+/* ═══════════════════════════════════════
+   ── ปุ่มต่อไป ──
+═══════════════════════════════════════ */
+
 #next-btn {
     margin-top: 2.4rem;
+
     font-family: 'Itim', sans-serif;
+
     font-size: 1rem;
+
     color: #fff;
-    background: rgba(255,255,255,.14);
-    border: 1px solid rgba(255,255,255,.3);
-    padding: .8rem 1.8rem;
+
+    background:
+        linear-gradient(
+            135deg,
+            #dd9640,
+            #c9547a
+        );
+
+    border: none;
+
+    padding:
+        .85rem 2rem;
+
     border-radius: 999px;
+
     cursor: pointer;
+
     pointer-events: auto;
-    transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .3s, background .3s;
-    animation: pulse-glow 2.4s ease-in-out infinite;
+
+    box-shadow:
+        0 8px 20px rgba(201,84,122,.35);
+
+    transition:
+        transform .25s cubic-bezier(.34,1.56,.64,1),
+        box-shadow .3s,
+        background .3s;
+
+    animation:
+        pulse-glow 2.4s ease-in-out infinite;
 }
+
 #next-btn:hover {
-    background: rgba(255,255,255,.22);
     transform: scale(1.06);
+
+    box-shadow:
+        0 10px 26px rgba(201,84,122,.45);
 }
+
 #next-btn:active {
     transform: scale(.94);
 }
+
 @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 0px rgba(255,179,71,0); }
-    50%      { box-shadow: 0 0 22px rgba(255,179,71,.55); }
+
+    0%,
+    100% {
+        box-shadow:
+            0 8px 20px rgba(201,84,122,.35),
+            0 0 0 rgba(255,179,71,0);
+    }
+
+    50% {
+        box-shadow:
+            0 8px 20px rgba(201,84,122,.35),
+            0 0 22px rgba(255,179,71,.55);
+    }
 }
 
-/* ── ฉากหัวใจ 3D ── */
+/* ═══════════════════════════════════════
+   ── ฉากหัวใจ 3D ──
+═══════════════════════════════════════ */
+
 #heart-scene {
     position: fixed;
+
     inset: 0;
+
     z-index: 20;
+
     background: #000;
+
     opacity: 0;
+
     pointer-events: none;
-    transition: opacity 1.2s ease;
+
+    transition:
+        opacity 1.2s ease;
 }
+
 #heart-scene.show {
     opacity: 1;
+
     pointer-events: auto;
 }
+
 #heart-canvas {
     width: 100%;
     height: 100%;
+
     display: block;
+
     cursor: grab;
+
     touch-action: none;
 }
+
 #heart-canvas:active {
     cursor: grabbing;
 }
