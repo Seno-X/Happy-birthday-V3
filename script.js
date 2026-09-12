@@ -97,13 +97,13 @@ drawParticles();
 
 
 // ══ ปุ่ม 5 ปุ่ม (เริ่มที่ 0 ทุกปุ่ม กดสลับ 0/1 ได้อิสระทีละปุ่ม) ══
-// ต้องกดครบ 5 ปุ่มหลายรอบ (สุ่ม 2-10 รอบตอนโหลดหน้า) ไม่สนลำดับที่กดในแต่ละรอบ ══
+// ต้องกดครบ 5 ปุ่มหลายรอบ (สุ่ม 1-10 รอบตอนโหลดหน้า) ไม่สนลำดับที่กดในแต่ละรอบ ══
 // ครบรอบแต่ยังไม่ถึงเป้าหมาย -> รีเซ็ตกลับเป็น 0 เงียบๆ ไม่บอกใบ้ ══
 const miniSwitches = Array.from(document.querySelectorAll('.mini-switch'));
 let switchStates = miniSwitches.map(() => false);
 let isDay = false;
 
-const ROUND_MIN = 2, ROUND_MAX = 5;
+const ROUND_MIN = 1, ROUND_MAX = 10;
 const targetRounds = Math.floor(Math.random() * (ROUND_MAX - ROUND_MIN + 1)) + ROUND_MIN;
 let currentRound = 0;
 
@@ -125,13 +125,30 @@ function setDayMode(next) {
             document.getElementById('switch-wrap').classList.add('hidden');
         }, 10));
         sequenceTimers.push(setTimeout(() => {
-            document.getElementById('message').classList.add('show');
+            document.getElementById('envelope-scene').classList.add('show');
         }, 700));
     } else {
         document.getElementById('message').classList.remove('show');
+        document.getElementById('envelope-scene').classList.remove('show', 'flying');
+        document.getElementById('envelope').classList.remove('opening');
         document.getElementById('switch-wrap').classList.remove('hidden');
     }
 }
+
+// ── เปิดซองจดหมาย: กด/แตะซอง -> ซองเลื่อนลงหายไป -> โผล่ข้อความบนกระดาษ ──
+const envelope = document.getElementById('envelope');
+const envelopeScene = document.getElementById('envelope-scene');
+
+envelope.addEventListener('click', () => {
+    if (envelope.classList.contains('opening')) return; // กันกดซ้ำระหว่างเล่นแอนิเมชัน
+    envelope.classList.add('opening');
+    envelopeScene.classList.add('flying');
+
+    setTimeout(() => {
+        envelopeScene.classList.remove('show');
+        document.getElementById('message').classList.add('show');
+    }, 1000);
+});
 
 const usedPatterns = new Set(); // เก็บลำดับการเปิดปุ่มที่เคยใช้ผ่านรอบไปแล้ว
 let onOrder = []; // ลำดับปุ่มที่กำลังเปิดอยู่ ณ ตอนนี้ เรียงตามลำดับที่ถูกเปิด
@@ -301,10 +318,20 @@ heartCanvas.addEventListener('pointermove', (e) => {
 heartCanvas.addEventListener('pointerup', () => { hDragging = false; });
 heartCanvas.addEventListener('pointercancel', () => { hDragging = false; });
 
+// ── จังหวะหัวใจเต้น (lub-dub) แบบคนที่สงบ: เบา นุ่ม ไม่กระตุก วนซ้ำช้าๆ ──
+const HEARTBEAT_PERIOD = 1.1; // วินาทีต่อรอบ (~55 ครั้ง/นาที แบบคนพักผ่อน)
+function heartbeatScale(tSec) {
+    const phase = (tSec % HEARTBEAT_PERIOD) / HEARTBEAT_PERIOD;
+    const lub = Math.exp(-Math.pow((phase - 0.08) / 0.075, 2)) * 1.0;
+    const dub = Math.exp(-Math.pow((phase - 0.24) / 0.08, 2)) * 0.4;
+    return 1 + (lub + dub) * 0.032; // ขยายเบาๆ แค่ราว +3% ตอนจังหวะเต้น นุ่มนวลไม่ฉูดฉาด
+}
+
 function drawHeart() {
     hCtx.clearRect(0, 0, hW, hH);
 
-    autoYaw += 0.0035; // หมุนเองเบาๆ ตลอดเวลา
+    const now = performance.now();
+    autoYaw = Math.sin(now * 0.00035) * 0.2094; // แกว่งซ้าย-ขวา ~12° โชว์ด้านหน้าเป็นหลัก ไม่หมุนวนทางเดียว
     const yaw = autoYaw + dragYaw;
     const pitch = dragPitch;
 
@@ -313,7 +340,6 @@ function drawHeart() {
     const FOV = 320;
     const cx = hW / 2, cy = hH / 2;
 
-    const now = performance.now();
     const elapsedGlobal = assembleStartTime !== null ? now - assembleStartTime : Infinity;
     const stillAssembling = elapsedGlobal < ASSEMBLE_TOTAL;
     const time = now * 0.0035;
@@ -340,6 +366,14 @@ function drawHeart() {
             px += p.u1.x * swirlMag + p.u2.x * swirlMag2;
             py += p.u1.y * swirlMag + p.u2.y * swirlMag2;
             pz += p.u1.z * swirlMag + p.u2.z * swirlMag2;
+        }
+
+        // เต้นเป็นจังหวะหลังประกอบร่างเสร็จแล้ว (ระหว่างประกอบร่างยังไม่เต้น)
+        if (!stillAssembling) {
+            const beat = heartbeatScale(now * 0.001);
+            px *= beat;
+            py *= beat;
+            pz *= beat;
         }
 
         // หมุนรอบแกน Y แล้วรอบแกน X
